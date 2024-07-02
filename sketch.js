@@ -6,16 +6,18 @@ const pixelsPerMeter = 100;
 let simulations = [
     { frequency: 440, amplitude: 1, listenerPosition: 0, isPlaying: false, useColor: false, phase: 0 },
     { frequency: 440, amplitude: 1, separation: 1, listenerPosition: 0, isPlaying: false, useColor: false, phase: 0 },
-    { frequency: 440, amplitude: 1, wallPosition: 0.25, wallAngle: 0, isPlaying: false, useColor: false, phase: 0, mode: 'continuous', hasPulse: false, pulseX: 0, pulseY: 0, pulsePhase: 0 }
+    { frequency: 440, amplitude: 1, wallPosition: 0.25, wallAngle: 0, isPlaying: false, useColor: false, phase: 0, mode: 'continuous', hasPulse: false, pulseX: 0, pulseY: 0, pulsePhase: 0 },
+    { frequency: 440, amplitude: 1, isPlaying: false, useColor: false, phase: 0 }
 ];
 
 let canvases = [], ctxs = [], imageDatas = [];
 let audioContext, oscillators = [];
 let currentTab = 0;
+let stopwatchInterval, stopwatchTime = 0;
 
 
 function setup() {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {  // Aumentado a 4 para incluir el nuevo tab
         let canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
@@ -37,6 +39,11 @@ function setup() {
             currentTab = newTab;
         });
     });
+    // Configurar elementos arrastrables
+    setupDraggables();
+
+    // Configurar cronómetro
+    setupStopwatch();
 }
 
 
@@ -88,11 +95,26 @@ function setupControls() {
             });
         }
 
+        document.getElementById('frequency4').addEventListener('input', (e) => {
+            simulations[3].frequency = Number(e.target.value);
+            document.getElementById('frequencyValue4').textContent = simulations[3].frequency;
+        });
+
+        document.getElementById('amplitude4').addEventListener('input', (e) => {
+            simulations[3].amplitude = Number(e.target.value);
+            document.getElementById('amplitudeValue4').textContent = simulations[3].amplitude;
+        });
+
         document.getElementById(`playPause${i+1}`).addEventListener('click', () => togglePlay(i));
         document.getElementById(`reset${i+1}`).addEventListener('click', () => resetSimulation(i));
         document.getElementById(`toggleColor${i+1}`).addEventListener('click', () => toggleColorMode(i));
         document.getElementById(`playAudio${i+1}`).addEventListener('click', () => toggleAudio(i));
         document.getElementById(`clear${i+1}`).addEventListener('click', () => clearWaves(i));
+
+
+        document.getElementById('playPause4').addEventListener('click', () => togglePlay(3));
+        document.getElementById('reset4').addEventListener('click', () => resetSimulation(3));
+        document.getElementById('toggleColor4').addEventListener('click', () => toggleColorMode(3));
     }
 
     // Evento para el modo de pulso en la simulación de reflexión
@@ -119,7 +141,7 @@ function updateWaveBuffer(index) {
             const ym = y / pixelsPerMeter;
 
             let amplitude = 0;
-            if (index === 0) {
+            if (index === 0 || index === 3) {
                 const d = Math.hypot(xm - width / pixelsPerMeter, ym - height / (2 * pixelsPerMeter));
                 amplitude = (Math.sin(k * d - sim.phase) / (1 + d * 0.2)) * sim.amplitude;
             } else if (index === 1) {
@@ -177,7 +199,7 @@ function updateWaveBuffer(index) {
 
 
 function draw() {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
         if (simulations[i].isPlaying && (i !== 2 || simulations[i].mode === 'continuous')) {
             simulations[i].phase += 0.1;
             simulations[i].phase %= 2 * Math.PI;
@@ -185,7 +207,7 @@ function draw() {
 
         if (i === 2 && simulations[i].mode === 'pulse' && simulations[i].hasPulse) {
             simulations[i].pulsePhase += 1;
-            if (simulations[i].pulsePhase > 60) {  // Ajusta este valor para cambiar la duración del pulso
+            if (simulations[i].pulsePhase > 60) {
                 simulations[i].hasPulse = false;
             }
         }
@@ -240,6 +262,15 @@ function draw() {
             ctxs[i].lineTo(wallX + wallLength * Math.sin(wallAngleRad), wallY - wallLength * Math.cos(wallAngleRad));
             ctxs[i].stroke();
         }
+
+        // Actualizar la regla en el tab de medición
+        if (i === 3) {
+            const ruler = document.getElementById('ruler');
+
+            const rulerWidth = ruler.offsetWidth;
+            const rulerMeters = rulerWidth / pixelsPerMeter;
+            document.querySelector('.ruler-label').textContent = `${rulerMeters.toFixed(2)} m`;
+        }
     }
 
     requestAnimationFrame(draw);
@@ -251,15 +282,15 @@ function togglePlay(index) {
 }
 
 function resetSimulation(index) {
-    if (index === 0 || index === 2) {
-        simulations[index] = { frequency: 440, amplitude: 1, listenerPosition: 0, isPlaying: false, useColor: false, phase: 0 };
+    if (index === 0 || index === 2 || index === 3) {
+        simulations[index] = { frequency: 440, amplitude: 1, isPlaying: false, useColor: false, phase: 0 };
         if (index === 2) {
             simulations[index].wallPosition = 0.25;
             simulations[index].wallAngle = 0;
             simulations[index].mode = 'continuous';
             simulations[index].hasPulse = false;
         }
-    } else {
+    } else if (index === 1) {
         simulations[index] = { frequency: 440, amplitude: 1, separation: 1, listenerPosition: 0, isPlaying: false, useColor: false, phase: 0 };
     }
     updateControls(index);
@@ -277,6 +308,7 @@ function updateControls(index) {
     document.getElementById(`frequencyValue${index+1}`).textContent = simulations[index].frequency;
     document.getElementById(`amplitude${index+1}`).value = simulations[index].amplitude;
     document.getElementById(`amplitudeValue${index+1}`).textContent = simulations[index].amplitude;
+
     if (index === 1) {
         document.getElementById('separation2').value = simulations[index].separation;
         document.getElementById('separationValue2').textContent = simulations[index].separation;
@@ -302,6 +334,69 @@ function toggleColorMode(index) {
         '<i class="fas fa-palette"></i> Cambiar a Escala de Grises' :
         '<i class="fas fa-palette"></i> Cambiar a Color';
 }
+
+function setupDraggables() {
+    const draggables = document.querySelectorAll('.draggable');
+    draggables.forEach(draggable => {
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
+
+        draggable.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseInt(window.getComputedStyle(draggable).left, 10);
+            startTop = parseInt(window.getComputedStyle(draggable).top, 10);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            draggable.style.left = `${startLeft + dx}px`;
+            draggable.style.top = `${startTop + dy}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+    });
+}
+
+function setupStopwatch() {
+    const startStopBtn = document.getElementById('startStopwatch');
+    const resetBtn = document.getElementById('resetStopwatch');
+    const display = document.querySelector('.stopwatch-display');
+
+    startStopBtn.addEventListener('click', () => {
+        if (stopwatchInterval) {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            startStopBtn.innerHTML = '<i class="fas fa-play"></i>';
+        } else {
+            const startTime = Date.now() - stopwatchTime;
+            stopwatchInterval = setInterval(() => {
+                stopwatchTime = Date.now() - startTime;
+                display.textContent = formatTime(stopwatchTime);
+            }, 10);
+            startStopBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        clearInterval(stopwatchInterval);
+        stopwatchInterval = null;
+        stopwatchTime = 0;
+        display.textContent = '00:000';
+        startStopBtn.innerHTML = '<i class="fas fa-play"></i>';
+    });
+}
+function formatTime(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const milliseconds = ms % 1000;
+    return `${seconds.toString().padStart(2, '0')}:${milliseconds.toString().padStart(3, '0')}`;
+}
+
 
 function toggleAudio(index) {
     if (oscillators[index]) {

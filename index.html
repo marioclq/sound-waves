@@ -30,6 +30,45 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+        .draggable {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        #ruler {
+            width: 300px;
+            height: 50px;
+            top: 50px;
+            left: 50px;
+        }
+        .ruler-scale {
+            width: 100%;
+            height: 20px;
+            background: repeating-linear-gradient(
+                    90deg,
+                    #000,
+                    #000 1px,
+                    transparent 1px,
+                    transparent 30px
+            );
+        }
+        .ruler-label {
+            text-align: right;
+        }
+        #stopwatch {
+            width: 150px;
+            top: 120px;
+            left: 50px;
+            text-align: center;
+        }
+        .stopwatch-display {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -44,6 +83,9 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="reflection-tab" data-bs-toggle="tab" data-bs-target="#reflection" type="button" role="tab" aria-controls="reflection" aria-selected="false">Reflexión</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="measurement-tab" data-bs-toggle="tab" data-bs-target="#measurement" type="button" role="tab" aria-controls="measurement" aria-selected="false">Medición</button>
         </li>
     </ul>
     <div class="tab-content" id="simulationTabContent">
@@ -147,6 +189,38 @@
                     </div>
                 </div>
                 <div class="col-md-8" id="canvas-container3"></div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="measurement" role="tabpanel" aria-labelledby="measurement-tab">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="control-panel">
+                        <h4>Controles</h4>
+                        <div class="mb-3">
+                            <label for="frequency4" class="form-label">Frecuencia (Hz): <span id="frequencyValue4">440</span></label>
+                            <input type="range" class="form-range" id="frequency4" min="100" max="1000" value="440" step="10">
+                        </div>
+                        <div class="mb-3">
+                            <label for="amplitude4" class="form-label">Amplitud: <span id="amplitudeValue4">1</span></label>
+                            <input type="range" class="form-range" id="amplitude4" min="0" max="1" value="1" step="0.1">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button id="playPause4" class="btn btn-primary btn-custom"><i class="fas fa-play"></i> Iniciar/Pausar</button>
+                            <button id="reset4" class="btn btn-secondary btn-custom"><i class="fas fa-undo"></i> Reiniciar</button>
+                            <button id="toggleColor4" class="btn btn-info btn-custom"><i class="fas fa-palette"></i> Cambiar a Color</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8" id="canvas-container4"></div>
+            </div>
+            <div id="ruler" class="draggable">
+                <div class="ruler-scale"></div>
+                <div class="ruler-label">0 m</div>
+            </div>
+            <div id="stopwatch" class="draggable">
+                <div class="stopwatch-display">00:000</div>
+                <button id="startStopwatch" class="btn btn-sm btn-primary"><i class="fas fa-play"></i></button>
+                <button id="resetStopwatch" class="btn btn-sm btn-secondary"><i class="fas fa-undo"></i></button>
             </div>
         </div>
     </div>
