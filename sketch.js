@@ -1,5 +1,5 @@
-const width = 600;
-const height = 400;
+const width = 675;
+const height = 675;
 const speedOfSound = 343; // m/s
 const pixelsPerMeter = 100;
 
@@ -14,9 +14,18 @@ let canvases = [], ctxs = [], imageDatas = [];
 let audioContext, oscillators = [];
 let currentTab = 0;
 let stopwatchInterval, stopwatchTime = 0;
+let soundSourceIcon, listenerIcon;
+
+function preload() {
+    soundSourceIcon = new Image();
+    soundSourceIcon.src = 'assets/icons/speaker.svg';
+    listenerIcon = new Image();
+    listenerIcon.src = 'assets/icons/user.svg';
+}
 
 
 function setup() {
+    preload();
     for (let i = 0; i < 4; i++) {  // Aumentado a 4 para incluir el nuevo tab
         let canvas = document.createElement('canvas');
         canvas.width = width;
@@ -214,38 +223,40 @@ function draw() {
 
         updateWaveBuffer(i);
 
+        const iconSize = 60;
+        const halfIconSize = iconSize / 2;
+
         // Dibujar la(s) fuente(s) de sonido
         ctxs[i].fillStyle = 'red';
         ctxs[i].beginPath();
         if (i === 1) {
-            ctxs[i].arc(width - 10, height / 2 - simulations[i].separation * pixelsPerMeter / 2, 5, 0, 2 * Math.PI);
-            ctxs[i].arc(width - 10, height / 2 + simulations[i].separation * pixelsPerMeter / 2, 5, 0, 2 * Math.PI);
-        } else {
-            ctxs[i].arc(width - 10, height / 2, 5, 0, 2 * Math.PI);
-        }
-        ctxs[i].fill();
+            const y1 = height / 2 - simulations[i].separation * pixelsPerMeter / 2;
+            const y2 = height / 2 + simulations[i].separation * pixelsPerMeter / 2;
+            ctxs[i].arc(width - 15, y1, 5, 0, 2 * Math.PI);
+            ctxs[i].arc(width - 15, y2, 5, 0, 2 * Math.PI);
+            ctxs[i].fill();
 
-        // Dibujar el/los icono(s) de la fuente de sonido
-        ctxs[i].fillStyle = 'white';
-        ctxs[i].font = '20px FontAwesome';
-        if (i === 1) {
-            ctxs[i].fillText('\uf028', width - 25, height / 2 - simulations[i].separation * pixelsPerMeter / 2 + 7);
-            ctxs[i].fillText('\uf028', width - 25, height / 2 + simulations[i].separation * pixelsPerMeter / 2 + 7);
+            // Dibujar los iconos de la fuente de sonido
+            ctxs[i].drawImage(soundSourceIcon, width - 15 - halfIconSize, y1 - halfIconSize, iconSize, iconSize);
+            ctxs[i].drawImage(soundSourceIcon, width - 15 - halfIconSize, y2 - halfIconSize, iconSize, iconSize);
         } else {
-            ctxs[i].fillText('\uf028', width - 25, height / 2 + 7);
+            ctxs[i].arc(width - 15, height / 2, 5, 0, 2 * Math.PI);
+            ctxs[i].fill();
+
+            // Dibujar el icono de la fuente de sonido
+            ctxs[i].drawImage(soundSourceIcon, width - 15 - halfIconSize, height / 2 - halfIconSize, iconSize, iconSize);
         }
 
         if (i < 2) {
             // Dibujar el escucha
+            const listenerX = 10 + simulations[i].listenerPosition * (width - 20);
             ctxs[i].fillStyle = 'blue';
             ctxs[i].beginPath();
-            ctxs[i].arc(10 + simulations[i].listenerPosition * (width - 20), height / 2, 5, 0, 2 * Math.PI);
+            ctxs[i].arc(listenerX, height / 2, 5, 0, 2 * Math.PI);
             ctxs[i].fill();
 
             // Dibujar el icono del escucha
-            ctxs[i].fillStyle = 'white';
-            ctxs[i].font = '20px FontAwesome';
-            ctxs[i].fillText('\uf2ce', 5 + simulations[i].listenerPosition * (width - 20), height / 2 + 7);
+            ctxs[i].drawImage(listenerIcon, listenerX - halfIconSize, height / 2 - halfIconSize, iconSize, iconSize);
         }
 
         if (i === 2) {
@@ -266,7 +277,6 @@ function draw() {
         // Actualizar la regla en el tab de medición
         if (i === 3) {
             const ruler = document.getElementById('ruler');
-
             const rulerWidth = ruler.offsetWidth;
             const rulerMeters = rulerWidth / pixelsPerMeter;
             document.querySelector('.ruler-label').textContent = `${rulerMeters.toFixed(2)} m`;
@@ -304,28 +314,49 @@ function resetSimulation(index) {
 }
 
 function updateControls(index) {
-    document.getElementById(`frequency${index+1}`).value = simulations[index].frequency;
-    document.getElementById(`frequencyValue${index+1}`).textContent = simulations[index].frequency;
-    document.getElementById(`amplitude${index+1}`).value = simulations[index].amplitude;
-    document.getElementById(`amplitudeValue${index+1}`).textContent = simulations[index].amplitude;
+    if (simulations[index]) {
+        const frequencyInput = document.getElementById(`frequency${index+1}`);
+        const frequencyValue = document.getElementById(`frequencyValue${index+1}`);
+        const amplitudeInput = document.getElementById(`amplitude${index+1}`);
+        const amplitudeValue = document.getElementById(`amplitudeValue${index+1}`);
 
-    if (index === 1) {
-        document.getElementById('separation2').value = simulations[index].separation;
-        document.getElementById('separationValue2').textContent = simulations[index].separation;
+        if (frequencyInput) frequencyInput.value = simulations[index].frequency || 440;
+        if (frequencyValue) frequencyValue.textContent = simulations[index].frequency || 440;
+        if (amplitudeInput) amplitudeInput.value = simulations[index].amplitude || 1;
+        if (amplitudeValue) amplitudeValue.textContent = simulations[index].amplitude || 1;
+
+        if (index === 1) {
+            const separationInput = document.getElementById('separation2');
+            const separationValue = document.getElementById('separationValue2');
+            if (separationInput) separationInput.value = simulations[index].separation || 1;
+            if (separationValue) separationValue.textContent = simulations[index].separation || 1;
+        }
+        if (index < 2) {
+            const listenerPositionInput = document.getElementById(`listenerPosition${index+1}`);
+            const listenerPositionValue = document.getElementById(`listenerPositionValue${index+1}`);
+            if (listenerPositionInput) listenerPositionInput.value = simulations[index].listenerPosition || 0;
+            if (listenerPositionValue) listenerPositionValue.textContent = simulations[index].listenerPosition || 0;
+        }
+        if (index === 2) {
+            const wallPositionInput = document.getElementById('wallPosition3');
+            const wallPositionValue = document.getElementById('wallPositionValue3');
+            const wallAngleInput = document.getElementById('wallAngle3');
+            const wallAngleValue = document.getElementById('wallAngleValue3');
+            const waveModeSelect = document.getElementById('waveMode3');
+
+            if (wallPositionInput) wallPositionInput.value = simulations[index].wallPosition || 0.25;
+            if (wallPositionValue) wallPositionValue.textContent = simulations[index].wallPosition || 0.25;
+            if (wallAngleInput) wallAngleInput.value = simulations[index].wallAngle || 0;
+            if (wallAngleValue) wallAngleValue.textContent = simulations[index].wallAngle || 0;
+            if (waveModeSelect) waveModeSelect.value = simulations[index].mode || 'continuous';
+        }
     }
-    if (index < 2) {
-        document.getElementById(`listenerPosition${index+1}`).value = simulations[index].listenerPosition;
-        document.getElementById(`listenerPositionValue${index+1}`).textContent = simulations[index].listenerPosition;
-    }
-    if (index === 2) {
-        document.getElementById('wallPosition3').value = simulations[index].wallPosition;
-        document.getElementById('wallPositionValue3').textContent = simulations[index].wallPosition;
-        document.getElementById('wallAngle3').value = simulations[index].wallAngle;
-        document.getElementById('wallAngleValue3').textContent = simulations[index].wallAngle;
-        document.getElementById('waveMode3').value = simulations[index].mode;
-    }
-    document.getElementById(`playPause${index+1}`).innerHTML = '<i class="fas fa-play"></i> Iniciar';
-    document.getElementById(`toggleColor${index+1}`).innerHTML = '<i class="fas fa-palette"></i> Cambiar a Color';
+
+    const playPauseButton = document.getElementById(`playPause${index+1}`);
+    const toggleColorButton = document.getElementById(`toggleColor${index+1}`);
+
+    if (playPauseButton) playPauseButton.innerHTML = '<i class="fas fa-play"></i> Iniciar';
+    if (toggleColorButton) toggleColorButton.innerHTML = '<i class="fas fa-palette"></i> Cambiar a Color';
 }
 
 function toggleColorMode(index) {
@@ -403,25 +434,38 @@ function toggleAudio(index) {
         oscillators[index].stop();
         oscillators[index].disconnect();
         oscillators[index] = null;
-        document.getElementById(`playAudio${index+1}`).innerHTML = '<i class="fas fa-volume-up"></i> Reproducir Audio';
+        const playAudioButton = document.getElementById(`playAudio${index+1}`);
+        if (playAudioButton) playAudioButton.innerHTML = '<i class="fas fa-volume-up"></i> Reproducir Audio';
     } else {
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(simulations[index].frequency, audioContext.currentTime);
+
+        let frequency = 440; // valor por defecto
+        if (simulations[index] && typeof simulations[index].frequency === 'number' && isFinite(simulations[index].frequency)) {
+            frequency = simulations[index].frequency;
+        }
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+        let amplitude = 1; // valor por defecto
+        if (simulations[index] && typeof simulations[index].amplitude === 'number' && isFinite(simulations[index].amplitude)) {
+            amplitude = simulations[index].amplitude;
+        }
 
         if (index < 2) {
-            const distance = 1 - simulations[index].listenerPosition;
+            const listenerPosition = simulations[index] && typeof simulations[index].listenerPosition === 'number' ? simulations[index].listenerPosition : 0;
+            const distance = 1 - listenerPosition;
             const gain = 1 / (1 + distance * 5);
-            gainNode.gain.setValueAtTime(gain * simulations[index].amplitude, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(gain * amplitude, audioContext.currentTime);
         } else {
-            gainNode.gain.setValueAtTime(simulations[index].amplitude, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(amplitude, audioContext.currentTime);
         }
 
         oscillator.connect(gainNode).connect(audioContext.destination);
         oscillator.start();
         oscillators[index] = oscillator;
-        document.getElementById(`playAudio${index+1}`).innerHTML = '<i class="fas fa-volume-mute"></i> Detener Audio';
+        const playAudioButton = document.getElementById(`playAudio${index+1}`);
+        if (playAudioButton) playAudioButton.innerHTML = '<i class="fas fa-volume-mute"></i> Detener Audio';
     }
 }
 
