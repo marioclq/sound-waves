@@ -24,6 +24,7 @@ function preload() {
 }
 
 
+
 function setup() {
     preload();
     for (let i = 0; i < 4; i++) {  // Aumentado a 4 para incluir el nuevo tab
@@ -53,6 +54,22 @@ function setup() {
 
     // Configurar cronómetro
     setupStopwatch();
+
+    // alignDraggablesToCanvas();
+}
+
+function alignDraggablesToCanvas() {
+    const canvas = document.querySelector('#canvas-container4 canvas');
+    const canvasRect = canvas.getBoundingClientRect();
+
+    const ruler = document.getElementById('ruler');
+    const stopwatch = document.getElementById('stopwatch');
+
+    ruler.style.left = `${canvasRect.left}px`;
+    ruler.style.top = `${canvasRect.top + canvasRect.height + 10}px`; // 10px de margen
+
+    stopwatch.style.left = `${canvasRect.left + canvasRect.width - stopwatch.offsetWidth}px`;
+    stopwatch.style.top = `${canvasRect.top + canvasRect.height + 10}px`; // 10px de margen
 }
 
 
@@ -392,7 +409,31 @@ function setupDraggables() {
             isDragging = false;
         });
     });
+
+    // Function to align draggables to the right of the control panel
+    function alignDraggables() {
+        const controlPanel = document.querySelector('.control-panel');
+        const controlPanelRect = controlPanel.getBoundingClientRect();
+
+        const ruler = document.getElementById('ruler');
+        const stopwatch = document.getElementById('stopwatch');
+
+        ruler.style.left = `${controlPanelRect.right + 30}px`; // 10px margin to the right of the control panel
+        ruler.style.top = `${controlPanelRect.top}px`;
+
+        stopwatch.style.left = `${controlPanelRect.right + 30}px`; // 10px margin to the right of the control panel
+        stopwatch.style.top = `${controlPanelRect.top + ruler.offsetHeight + 60}px`; // 10px margin below the ruler
+    }
+
+    // Align draggables on window resize
+    window.addEventListener('resize', alignDraggables);
+
+    // Align draggables initially
+    alignDraggables();
 }
+
+
+
 
 function setupStopwatch() {
     const startStopBtn = document.getElementById('startStopwatch');
